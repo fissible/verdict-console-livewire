@@ -9,7 +9,8 @@ evidence query).
 > (`composer require fissible/verdict-console-livewire`), boots its provider, and carries the
 > transport decision (polling default, broadcast opt-in via
 > `verdict-console-livewire.transport`). The first surfaces are tracked in this repository's
-> v0.1.0 milestone. Design of record: verdict-console
+> v0.1.0 milestone. The chat surface is available as
+> `<livewire:verdict-console-livewire::chat />`. Design of record: verdict-console
 > [`docs/design/0001-verdict-console-design.md`](https://github.com/fissible/verdict-console/blob/main/docs/design/0001-verdict-console-design.md) §8–§9.
 
 Depends on `fissible/verdict-console` (Packagist). No Livewire types may leak into the core package;

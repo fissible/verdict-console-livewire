@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Fissible\VerdictConsoleLivewire;
 
 use Illuminate\Support\ServiceProvider;
+use Livewire\Livewire;
 
 /**
  * Wires the Livewire adapter into a host that already runs the console core.
@@ -24,6 +25,15 @@ final class VerdictConsoleLivewireServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        $this->loadViewsFrom(__DIR__.'/../resources/views', 'verdict-console-livewire');
+
+        Livewire::addNamespace(
+            namespace: 'verdict-console-livewire',
+            classNamespace: 'Fissible\\VerdictConsoleLivewire\\Livewire',
+            classPath: __DIR__.'/Livewire',
+            classViewPath: __DIR__.'/../resources/views/livewire',
+        );
+
         $this->publishes([
             __DIR__.'/../config/verdict-console-livewire.php' => config_path('verdict-console-livewire.php'),
         ], ['verdict-console-livewire', 'verdict-console-livewire-config']);

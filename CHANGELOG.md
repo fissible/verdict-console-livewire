@@ -4,6 +4,16 @@ All notable changes to Verdict Console Livewire will be documented in this file.
 
 ## [Unreleased]
 
+- **Reactive inbox (VC-25, #3).** `<livewire:verdict-console-livewire::inbox />` — the live
+  upgrade of the core's approval inbox widget over the same scoped pending-approval query. A new
+  pause appears on the next poll tick with no reload; every core lifecycle state renders with the
+  core's markup contract (pending, lapsed, decided, unavailable, not-console-actionable), newest
+  first; approve/reject/close are live controls driving the core resolution service — close is
+  real here, this being the inbox where close lives — with the action's outcome surfaced in the
+  core controller's status vocabulary (approved/rejected/not_actionable and the close outcomes).
+  Verbs stay pinned to `ApprovalSurfaceContract`; guests, denied Gates, unknown rows, and
+  host-scoped-out rows refuse exactly as the core endpoints do.
+
 - **Chat with inline approval cards (VC-24, #2).** `<livewire:verdict-console-livewire::chat />` —
   the reactive upgrade of the core's reload-driven Blade chat. A turn sends without a reload; a
   paused run renders its approval card mid-thread from the core's approval item read-model; the

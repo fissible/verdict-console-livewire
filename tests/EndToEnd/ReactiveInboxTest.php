@@ -167,12 +167,20 @@ function liveInboxUser(int $id = 7): GenericUser
     return new GenericUser(['id' => $id]);
 }
 
-/** Drive one real pause outside any component, as another process would. */
-function liveInboxPause(string $toolCallId): StoredPendingApproval
+/**
+ * Drive one real pause outside any component, as another process would.
+ *
+ * Multi-pause tests must register ONE combined sequence and pass fake: false — Http::fake
+ * handlers answer first-registered-first, so a second per-call fake never answers while the
+ * first sequence still holds its leftover resume push (the VC-21 measured fact).
+ */
+function liveInboxPause(string $toolCallId, bool $fake = true): StoredPendingApproval
 {
-    Http::fake(['*/chat/completions' => Http::sequence()
-        ->push(test()->toolCallResponse($toolCallId, 'LiveInboxCancelOrderTool', ['order_id' => LIVE_INBOX_ORDER_ID]))
-        ->push(test()->textResponse('Done — your order is cancelled.'))]);
+    if ($fake) {
+        Http::fake(['*/chat/completions' => Http::sequence()
+            ->push(test()->toolCallResponse($toolCallId, 'LiveInboxCancelOrderTool', ['order_id' => LIVE_INBOX_ORDER_ID]))
+            ->push(test()->textResponse('Done — your order is cancelled.'))]);
+    }
 
     $paused = (new LiveInboxAgent)->forParticipant(liveInboxUser())->prompt('Please cancel order '.LIVE_INBOX_ORDER_ID.'.');
 
@@ -283,8 +291,9 @@ it('approves through the core resolution service and the row leaves the pending 
         // The core resolution service is the only writer of this counter.
         ->and(StoredPendingApproval::query()->sole()->resume_attempts)->toBe(1);
 
+    // The row re-renders from the live status read, without a reload.
     expect(liveInboxRowHtml($component->html(), (string) $row->id))
-        ->toContain('data-state="already_decided"', 'The row re-renders from the live status read, without a reload.');
+        ->toContain('data-state="already_decided"');
 
     Http::assertSentCount(2);
 });
@@ -351,8 +360,11 @@ it('relays a close that found a live decision still available, deciding nothing'
 
 /** ADR 0001's verb invariant across lifecycle states, against the shared contract and real reader. */
 it('renders exactly the verb set the surface contract resolves for every row', function (): void {
-    $pending = liveInboxPause('call_li_matrix_pending');
-    $lapsed = liveInboxPause('call_li_matrix_lapsed');
+    Http::fake(['*/chat/completions' => Http::sequence()
+        ->push($this->toolCallResponse('call_li_matrix_pending', 'LiveInboxCancelOrderTool', ['order_id' => LIVE_INBOX_ORDER_ID]))
+        ->push($this->toolCallResponse('call_li_matrix_lapsed', 'LiveInboxCancelOrderTool', ['order_id' => LIVE_INBOX_ORDER_ID]))]);
+    $pending = liveInboxPause('call_li_matrix_pending', fake: false);
+    $lapsed = liveInboxPause('call_li_matrix_lapsed', fake: false);
     DB::table('verdict_approval_receipts')->where('tool_call_id', 'call_li_matrix_lapsed')->update(['expires_at' => now()->subMinute()]);
     $this->actingAs(liveInboxUser());
 
@@ -429,9 +441,12 @@ it('neither renders nor resolves a row outside the host scope', function (): voi
 
 /** Every lifecycle state the core widget renders survives the reactive surface, unfiltered. */
 it('renders unavailable and not-console-actionable rows exactly as the core states them', function (): void {
-    $vanished = liveInboxPause('call_li_vanished');
+    Http::fake(['*/chat/completions' => Http::sequence()
+        ->push($this->toolCallResponse('call_li_vanished', 'LiveInboxCancelOrderTool', ['order_id' => LIVE_INBOX_ORDER_ID]))
+        ->push($this->toolCallResponse('call_li_stranded', 'LiveInboxCancelOrderTool', ['order_id' => LIVE_INBOX_ORDER_ID]))]);
+    $vanished = liveInboxPause('call_li_vanished', fake: false);
     DB::table('verdict_approval_receipts')->where('tool_call_id', 'call_li_vanished')->delete();
-    $stranded = liveInboxPause('call_li_stranded');
+    $stranded = liveInboxPause('call_li_stranded', fake: false);
     $stranded->forceFill(['resumability' => 'unresumable', 'unresumable_reason' => 'agent_unresolvable', 'resolver_key' => null])->save();
     $this->actingAs(liveInboxUser());
 
@@ -526,10 +541,13 @@ it('offers only close on a decided row, per the surface contract', function (): 
 
 /** The core query's contract carries through: newest pause first. */
 it('lists newer pauses before older ones', function (): void {
+    Http::fake(['*/chat/completions' => Http::sequence()
+        ->push($this->toolCallResponse('call_li_older', 'LiveInboxCancelOrderTool', ['order_id' => LIVE_INBOX_ORDER_ID]))
+        ->push($this->toolCallResponse('call_li_newer', 'LiveInboxCancelOrderTool', ['order_id' => LIVE_INBOX_ORDER_ID]))]);
     Carbon::setTestNow('2026-08-31 10:00:00');
-    $older = liveInboxPause('call_li_older');
+    $older = liveInboxPause('call_li_older', fake: false);
     Carbon::setTestNow('2026-08-31 10:00:05');
-    $newer = liveInboxPause('call_li_newer');
+    $newer = liveInboxPause('call_li_newer', fake: false);
     Carbon::setTestNow();
     $this->actingAs(liveInboxUser());
 

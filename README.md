@@ -5,8 +5,10 @@ end-user chat with inline approval cards, a reactive approval inbox, and a live 
 rendering the console's headless contracts (`ApprovalVerbs`, the approval item read-model, the
 evidence query).
 
-> **Status: repository stood up, package not yet scaffolded.** The scaffold, transport wiring
-> (polling default, broadcast opt-in), and the first surfaces are tracked in this repository's
+> **Status: scaffolded, surfaces in progress.** The package installs beside the console core
+> (`composer require fissible/verdict-console-livewire`), boots its provider, and carries the
+> transport decision (polling default, broadcast opt-in via
+> `verdict-console-livewire.transport`). The first surfaces are tracked in this repository's
 > v0.1.0 milestone. Design of record: verdict-console
 > [`docs/design/0001-verdict-console-design.md`](https://github.com/fissible/verdict-console/blob/main/docs/design/0001-verdict-console-design.md) §8–§9.
 

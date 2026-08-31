@@ -8,6 +8,8 @@ use Fissible\Verdict\Actions\AuthorizedAction;
 use Fissible\Verdict\Capabilities\Capability;
 use Fissible\Verdict\Capabilities\CapabilityRegistry;
 use Fissible\Verdict\Contracts\ApprovalStatusReader;
+use Fissible\Verdict\Contracts\CapabilityAuthorizer;
+use Fissible\Verdict\Decisions\Decision;
 use Fissible\Verdict\LaravelAi\VerdictApprovalMiddleware;
 use Fissible\Verdict\Targets\ExecutionTargetPolicy;
 use Fissible\Verdict\VerdictManager;
@@ -15,11 +17,11 @@ use Fissible\VerdictConsole\Agents\AgentResolverRegistry;
 use Fissible\VerdictConsole\Approvals\ApprovalSurfaceContract;
 use Fissible\VerdictConsole\Approvals\ApprovalVerb;
 use Fissible\VerdictConsole\Approvals\PendingApproval as StoredPendingApproval;
+use Fissible\VerdictConsole\Contracts\ConversationParticipants;
 use Fissible\VerdictConsole\Contracts\ResumableAgents;
 use Fissible\VerdictConsole\Exceptions\UnresolvableAgentKey;
 use Fissible\VerdictConsoleLivewire\Livewire\Chat;
 use Fissible\VerdictConsoleLivewire\Tests\EndToEndTestCase;
-use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Auth\GenericUser;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Illuminate\JsonSchema\Types\Type;
@@ -35,7 +37,6 @@ use Laravel\Ai\Contracts\Tool;
 use Laravel\Ai\Promptable;
 use Laravel\Ai\Tools\Request;
 use Livewire\Livewire;
-use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 /**
  * VC-24, the flagship: a reactive chat whose approval interrupt is a card in the thread, resolved
@@ -137,6 +138,32 @@ final class CardsAgent implements Agent, HasMiddleware, HasTools, RemembersConve
     }
 }
 
+/**
+ * Rebuilds the GenericUser participant by its host-owned opaque reference. Without a participants
+ * binding the console's default refuses, ingestion records every pause participant-unresolvable,
+ * and no card is ever actionable — the same wiring every host (and every core e2e file) supplies.
+ */
+final class CardsParticipants implements ConversationParticipants
+{
+    public function referenceFor(object $participant): string
+    {
+        if (! $participant instanceof GenericUser) {
+            throw new LogicException('Unexpected cards participant.');
+        }
+
+        return 'user:'.$participant->getAuthIdentifier();
+    }
+
+    public function resolve(string $reference): object
+    {
+        if (! preg_match('/^user:(\d+)$/', $reference, $matches)) {
+            throw new LogicException('Unknown cards participant reference.');
+        }
+
+        return cardsUser((int) $matches[1]);
+    }
+}
+
 function cardsUser(int $id = 7): GenericUser
 {
     // Numeric, faithful to the production participant columns (unsigned big integers) — a string
@@ -172,6 +199,17 @@ function cardsRenderedVerbs(string $html, string $approvalId): array
 beforeEach(function (): void {
     $this->migrateChatTables();
     $this->app->instance(CardsLedger::class, new CardsLedger);
+    $this->app->instance(ConversationParticipants::class, new CardsParticipants);
+
+    // A permitting capability authorizer keeps these tests about the surface rather than policy
+    // resolution: without one Verdict fails closed, the proposal is denied, and nothing pauses.
+    $this->app->instance(CapabilityAuthorizer::class, new class implements CapabilityAuthorizer
+    {
+        public function decide(Capability $capability, ActionEnvelope $envelope, mixed $target): Decision
+        {
+            return Decision::permit('cards test');
+        }
+    });
 
     /** @var AgentResolverRegistry $resolvers */
     $resolvers = app(ResumableAgents::class);
@@ -308,8 +346,13 @@ it('shows no card for an interrupt that is no longer pending', function (): void
         ->assertSee('Please cancel order '.CARDS_ORDER_ID.'.');
 });
 
-/** The core's indistinguishable refusal survives the reactive surface: foreign and unknown read alike. */
-it('refuses a foreign conversation with the same message as an unknown one', function (): void {
+/**
+ * The core's indistinguishable refusal survives the reactive surface: a foreign conversation and
+ * an unknown one both mount to the same 403. (Livewire keeps AuthorizationException handled, so
+ * the component surfaces status, not exception; the exact-message parity is core-tested at
+ * ChatService level and cannot silently diverge here.)
+ */
+it('refuses a foreign conversation exactly like an unknown one', function (): void {
     Http::fake(['*/chat/completions' => Http::sequence()->push($this->textResponse('Hello.'))]);
     $this->actingAs(cardsUser());
 
@@ -318,31 +361,18 @@ it('refuses a foreign conversation with the same message as an unknown one', fun
 
     $this->actingAs(cardsUser(8));
 
-    $foreign = null;
-    $unknown = null;
-
-    try {
-        Livewire::test(Chat::class, ['conversation' => $conversation]);
-    } catch (AuthorizationException $e) {
-        $foreign = $e->getMessage();
-    }
-
-    try {
-        Livewire::test(Chat::class, ['conversation' => 'no-such-conversation']);
-    } catch (AuthorizationException $e) {
-        $unknown = $e->getMessage();
-    }
-
-    expect($foreign)->not->toBeNull('A foreign conversation must refuse.')
-        ->and($unknown)->not->toBeNull('An unknown conversation must refuse.')
-        ->and($foreign)->toBe($unknown, 'Foreign and unknown must be indistinguishable.');
+    Livewire::test(Chat::class, ['conversation' => $conversation])->assertForbidden();
+    Livewire::test(Chat::class, ['conversation' => 'no-such-conversation'])->assertForbidden();
 });
 
+/** Livewire keeps AuthorizationException handled (its request broker's except-list), so the refusal is a 403. */
 it('refuses to send for a guest', function (): void {
     Http::fake();
 
-    expect(fn () => Livewire::test(Chat::class)->set('prompt', 'Hi')->call('send'))
-        ->toThrow(AuthorizationException::class);
+    Livewire::test(Chat::class)
+        ->set('prompt', 'Hi')
+        ->call('send')
+        ->assertForbidden();
 
     Http::assertNothingSent();
 });
@@ -404,8 +434,8 @@ it('refuses a decision the host Gate denies, leaving the card actionable', funct
 
     $row = StoredPendingApproval::query()->sole();
 
-    expect(fn () => $component->call('approve', (string) $row->id))
-        ->toThrow(AuthorizationException::class);
+    $component->call('approve', (string) $row->id)->assertForbidden();
+
     expect($consulted)->toBe([[7, CARDS_TOOL_CALL_ID]], 'The actor and the row must reach the configured ability.')
         ->and(app(CardsLedger::class)->executions)->toBe(0)
         ->and(DB::table('verdict_approval_receipts')->where('tool_call_id', CARDS_TOOL_CALL_ID)->value('status'))->toBe('pending');
@@ -428,8 +458,8 @@ it('refuses to resolve a card that belongs to another conversation', function ()
 
     $rowA = StoredPendingApproval::query()->where('tool_call_id', 'call_cards_a')->sole();
 
-    expect(fn () => $componentB->call('approve', (string) $rowA->id))
-        ->toThrow(NotFoundHttpException::class);
+    $componentB->call('approve', (string) $rowA->id)->assertNotFound();
+
     expect(app(CardsLedger::class)->executions)->toBe(0)
         ->and(DB::table('verdict_approval_receipts')->where('tool_call_id', 'call_cards_a')->value('status'))->toBe('pending');
 });

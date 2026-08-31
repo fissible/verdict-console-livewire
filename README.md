@@ -6,7 +6,7 @@ rendering the console's headless contracts (`ApprovalVerbs`, the approval item r
 evidence query).
 
 > **Status: scaffolded, surfaces in progress.** The package installs beside the console core
-> (`composer require fissible/verdict-console-livewire:^0.1 boots its provider, and carries the
+> (`composer require fissible/verdict-console-livewire:^0.2 boots its provider, and carries the
 > transport decision (polling default, broadcast opt-in via
 > `verdict-console-livewire.transport`). The first surfaces are tracked in this repository's
 > v0.1.0 milestone. The chat surface is available as

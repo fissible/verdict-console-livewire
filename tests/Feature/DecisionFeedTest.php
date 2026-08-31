@@ -6,6 +6,7 @@ use Fissible\Verdict\Evidence\DatabaseEvidenceRecorder;
 use Fissible\Verdict\Evidence\NullEvidenceRecorder;
 use Fissible\VerdictConsole\Contracts\EvidenceQuery;
 use Fissible\VerdictConsole\Evidence\EvidenceFilter;
+use Fissible\VerdictConsole\Evidence\EvidencePage;
 use Fissible\VerdictConsole\Evidence\EvidenceQueryResult;
 use Fissible\VerdictConsole\Evidence\EvidenceRecordingState;
 use Fissible\VerdictConsoleLivewire\Livewire\DecisionFeed;
@@ -184,6 +185,13 @@ it('renders whatever the bound evidence contract answers, never the table or con
                 records: [],
                 recordedBy: 'Fake\\NotDerivableFromConfig',
             );
+        }
+
+        public function searchPage(EvidenceFilter $filter, int $page, int $perPage): EvidencePage
+        {
+            $result = $this->search($filter);
+
+            return new EvidencePage($result->recording, $result->records, 0, $page, $perPage, $result->recordedBy);
         }
     });
 

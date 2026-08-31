@@ -4,6 +4,8 @@ All notable changes to Verdict Console Livewire will be documented in this file.
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-08-31
+
 - **Live decision feed (VC-26, #4).** `<livewire:verdict-console-livewire::decision-feed />` —
   the reactive, newest-first slice of the core's evidence read boundary. Dispositions recorded by
   other processes stream in on the poll tick with no reload; the core audit page's honest states
@@ -38,3 +40,6 @@ All notable changes to Verdict Console Livewire will be documented in this file.
   Testbench wiring booting Livewire + core + this adapter together; the 24-cell CI matrix; and the
   transport decision as code -- `Transport::fromConfig()` with polling default, broadcast opt-in,
   and loud refusal of unknown values.
+
+[Unreleased]: https://github.com/fissible/verdict-console-livewire/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/fissible/verdict-console-livewire/releases/tag/v0.1.0

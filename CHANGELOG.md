@@ -4,8 +4,11 @@ All notable changes to Verdict Console Livewire will be documented in this file.
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-08-31
+
 - **Require verdict-console `^0.7`.** The 0.7.0 boundary adds `EvidenceQuery::searchPage()`; the
   decision feed keeps reading the complete projection, and only its test double grows the method.
+
 ## [0.2.0] - 2026-08-31
 
 - **Require verdict-console `^0.6`.** The bound moves to the current minor per the standing
@@ -49,6 +52,7 @@ All notable changes to Verdict Console Livewire will be documented in this file.
   transport decision as code -- `Transport::fromConfig()` with polling default, broadcast opt-in,
   and loud refusal of unknown values.
 
-[Unreleased]: https://github.com/fissible/verdict-console-livewire/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/fissible/verdict-console-livewire/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/fissible/verdict-console-livewire/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/fissible/verdict-console-livewire/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/fissible/verdict-console-livewire/releases/tag/v0.1.0

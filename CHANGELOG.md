@@ -4,6 +4,8 @@ All notable changes to Verdict Console Livewire will be documented in this file.
 
 ## [Unreleased]
 
+- **Require verdict-console `^0.7`.** The 0.7.0 boundary adds `EvidenceQuery::searchPage()`; the
+  decision feed keeps reading the complete projection, and only its test double grows the method.
 ## [0.2.0] - 2026-08-31
 
 - **Require verdict-console `^0.6`.** The bound moves to the current minor per the standing

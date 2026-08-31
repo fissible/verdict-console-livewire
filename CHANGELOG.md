@@ -4,6 +4,14 @@ All notable changes to Verdict Console Livewire will be documented in this file.
 
 ## [Unreleased]
 
+- **Live decision feed (VC-26, #4).** `<livewire:verdict-console-livewire::decision-feed />` —
+  the reactive, newest-first slice of the core's evidence read boundary. Dispositions recorded by
+  other processes stream in on the poll tick with no reload; the core audit page's honest states
+  outrank the rows verbatim (recording off is blank by config even when the table holds rows,
+  recorded-elsewhere names the writer, recording-on-but-empty reads differently from off); the
+  feed length is a mount parameter. Pure function of `EvidenceQuery` — no table names, no
+  recorder knowledge, no config interpretation of its own.
+
 - **Reactive inbox (VC-25, #3).** `<livewire:verdict-console-livewire::inbox />` — the live
   upgrade of the core's approval inbox widget over the same scoped pending-approval query. A new
   pause appears on the next poll tick with no reload; every core lifecycle state renders with the

@@ -30,4 +30,16 @@ abstract class TestCase extends Orchestra
             VerdictConsoleLivewireServiceProvider::class,
         ];
     }
+
+    /**
+     * Livewire component requests are session-backed and need an app key like any other request;
+     * a fixed test-only key keeps the suite hermetic and deterministic (the EndToEnd base does
+     * the same).
+     *
+     * @param  Application  $app
+     */
+    protected function defineEnvironment($app): void
+    {
+        $app['config']->set('app.key', 'base64:'.base64_encode(str_repeat('k', 32)));
+    }
 }

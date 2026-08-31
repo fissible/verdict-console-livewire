@@ -4,6 +4,9 @@ All notable changes to Verdict Console Livewire will be documented in this file.
 
 ## [Unreleased]
 
+- **Require verdict-console `^0.6`.** The bound moves to the current minor per the standing
+  prefer-lowest reasoning; 0.6.0's only change is the Verdict `^0.14` floor, which reaches this
+  package solely through the console.
 ## [0.1.0] - 2026-08-31
 
 - **Live decision feed (VC-26, #4).** `<livewire:verdict-console-livewire::decision-feed />` —

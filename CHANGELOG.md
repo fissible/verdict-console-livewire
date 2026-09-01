@@ -4,6 +4,9 @@ All notable changes to Verdict Console Livewire will be documented in this file.
 
 ## [Unreleased]
 
+- **Chained evidence sink rendered honestly (console ^0.8).** The decision feed now says a chained
+  sink holds the decisions — naming the chain when the boundary names it — instead of falling
+  through to "No decisions have been recorded."; the `^0.8` console pin rides this change.
 ## [0.3.0] - 2026-08-31
 
 - **Require verdict-console `^0.7`.** The 0.7.0 boundary adds `EvidenceQuery::searchPage()`; the

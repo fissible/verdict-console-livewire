@@ -250,3 +250,33 @@ it('polls only while the transport is polling, at the configured interval', func
 
     expect($html)->not->toContain('wire:poll');
 });
+
+it('says a chained sink holds the decisions instead of the empty-feed line', function (): void {
+    seedFeedDecisions(1);
+    app()->instance(EvidenceQuery::class, new class implements EvidenceQuery
+    {
+        public function search(EvidenceFilter $filter): EvidenceQueryResult
+        {
+            return new EvidenceQueryResult(
+                recording: EvidenceRecordingState::Chained,
+                records: [],
+                recordedBy: 'verdict-evidence',
+            );
+        }
+
+        public function searchPage(EvidenceFilter $filter, int $page, int $perPage): EvidencePage
+        {
+            $result = $this->search($filter);
+
+            return new EvidencePage($result->recording, $result->records, 0, $page, $perPage, $result->recordedBy);
+        }
+    });
+
+    // A chained answer must never fall through to the empty-feed line that reads as "nothing
+    // happened" — the decisions exist, in a sink this table does not cover.
+    Livewire::test(DecisionFeed::class)
+        ->assertSeeHtml('data-recording="chained"')
+        ->assertSee('A chained sink (verdict-evidence) is configured; decisions are not readable from this table.')
+        ->assertDontSee('No decisions have been recorded.')
+        ->assertDontSeeHtml('data-record=');
+});

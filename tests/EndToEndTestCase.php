@@ -49,7 +49,7 @@ abstract class EndToEndTestCase extends Orchestra
     protected function defineEnvironment($app): void
     {
         $app['config']->set('ai.providers.'.self::PROVIDER, [
-            'driver' => 'openai_compatible',
+            'driver' => 'openai-compatible',
             'key' => 'not-a-real-key',
             'url' => self::BASE_URL,
             'models' => ['text' => ['default' => self::MODEL]],
@@ -75,6 +75,10 @@ abstract class EndToEndTestCase extends Orchestra
         (require $verdict.'/create_verdict_approval_receipts_table.php.stub')->up();
         (require $verdict.'/add_proposal_provenance_to_verdict_approval_receipts_table.php.stub')->up();
         (require $verdict.'/add_approval_context_to_verdict_approval_receipts_table.php.stub')->up();
+        (require $verdict.'/create_verdict_binding_admission_locks_table.php.stub')->up();
+        (require $verdict.'/create_verdict_consumed_binding_guards_table.php.stub')->up();
+        (require $verdict.'/add_scheme_to_verdict_consumed_binding_guards_table.php.stub')->up();
+        (require $verdict.'/create_verdict_approval_refusals_table.php.stub')->up();
         (require $ai.'/2026_01_11_000001_create_agent_conversations_table.php')->up();
         (require $console.'/create_verdict_console_pending_approvals_table.php.stub')->up();
         (require $console.'/add_operational_state_to_verdict_console_pending_approvals_table.php.stub')->up();

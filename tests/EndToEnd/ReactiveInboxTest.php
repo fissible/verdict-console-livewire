@@ -10,7 +10,6 @@ use Fissible\Verdict\Capabilities\CapabilityRegistry;
 use Fissible\Verdict\Contracts\ApprovalStatusReader;
 use Fissible\Verdict\Contracts\CapabilityAuthorizer;
 use Fissible\Verdict\Decisions\Decision;
-use Fissible\Verdict\LaravelAi\VerdictApprovalMiddleware;
 use Fissible\Verdict\Targets\ExecutionTargetPolicy;
 use Fissible\Verdict\VerdictManager;
 use Fissible\VerdictConsole\Agents\AgentResolverRegistry;
@@ -34,7 +33,6 @@ use Laravel\Ai\Approvals\Decision as AiDecision;
 use Laravel\Ai\Approvals\Decisions;
 use Laravel\Ai\Concerns\RemembersConversations as RemembersConversationsTrait;
 use Laravel\Ai\Contracts\Agent;
-use Laravel\Ai\Contracts\HasMiddleware;
 use Laravel\Ai\Contracts\HasTools;
 use Laravel\Ai\Contracts\RemembersConversations as RemembersConversationsContract;
 use Laravel\Ai\Contracts\Tool;
@@ -108,7 +106,7 @@ function liveInboxBoundTool(): Tool
     return $verdict->bound(new LiveInboxCancelOrderTool, 'live-inbox.orders.cancel', new ActionContext('live-inbox-customer'));
 }
 
-final class LiveInboxAgent implements Agent, HasMiddleware, HasTools, RemembersConversationsContract
+final class LiveInboxAgent implements Agent, HasTools, RemembersConversationsContract
 {
     use Promptable;
     use RemembersConversationsTrait;
@@ -125,11 +123,6 @@ final class LiveInboxAgent implements Agent, HasMiddleware, HasTools, RemembersC
     }
 
     /** @return array<int, object> */
-    public function middleware(): array
-    {
-        return [app(VerdictApprovalMiddleware::class)];
-    }
-
     public function provider(): string
     {
         return EndToEndTestCase::PROVIDER;

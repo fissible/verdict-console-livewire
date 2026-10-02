@@ -4,6 +4,16 @@ All notable changes to Verdict Console Livewire will be documented in this file.
 
 ## [Unreleased]
 
+- **Core `^0.11`: laravel/ai 1.0 and Verdict 0.18 (BREAKING).** The adapter now tracks
+  `fissible/verdict-console ^0.11`, which requires `laravel/ai ^1.0` and `fissible/verdict ^0.18`.
+  The end-to-end harness moves with the core's seams: Verdict's approval gate attaches at the
+  provider (Laravel AI 1.0's `middleware()` is step-scoped), so the chat and inbox agents no longer
+  declare it; the suite's provider driver is spelled `openai-compatible` — the underscore spelling
+  resolves a real but ungated provider through Laravel AI's studly fallback; and the harness
+  migrates Verdict 0.17's admission-lock, consumed-binding-guard, and approval-refusal tables the
+  gated issuance path now writes. The decision-feed fixture also tracks the two evidence columns
+  Verdict 0.16/0.17 added (`review_outcome`, `review_request_fingerprint`).
+
 ## [0.4.0] - 2026-09-01
 
 - **Chained evidence sink rendered honestly (console ^0.8).** The decision feed now says a chained

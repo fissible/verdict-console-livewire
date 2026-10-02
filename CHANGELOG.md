@@ -4,6 +4,8 @@ All notable changes to Verdict Console Livewire will be documented in this file.
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-10-02
+
 - **Core `^0.11`: laravel/ai 1.0 and Verdict 0.18 (BREAKING).** The adapter now tracks
   `fissible/verdict-console ^0.11`, which requires `laravel/ai ^1.0` and `fissible/verdict ^0.18`.
   The end-to-end harness moves with the core's seams: Verdict's approval gate attaches at the
@@ -68,7 +70,8 @@ All notable changes to Verdict Console Livewire will be documented in this file.
   transport decision as code -- `Transport::fromConfig()` with polling default, broadcast opt-in,
   and loud refusal of unknown values.
 
-[Unreleased]: https://github.com/fissible/verdict-console-livewire/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/fissible/verdict-console-livewire/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/fissible/verdict-console-livewire/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/fissible/verdict-console-livewire/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/fissible/verdict-console-livewire/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/fissible/verdict-console-livewire/compare/v0.1.0...v0.2.0
